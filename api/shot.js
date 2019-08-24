@@ -1,13 +1,7 @@
-const chrome = require('chrome-aws-lambda')
-const puppeteer = require('puppeteer-core')
+const puppeteer = require('puppeteer')
 
-async function shot(url, type){
-  const browser = await puppeteer.launch({
-    args: chrome.args,
-    executablePath: await chrome.executablePath,
-    headless: chrome.headless,
-  })
-  console.log({browser})
+async function shot(url, type) {
+  const browser = await puppeteer.launch()
   const page = await browser.newPage()
   await page.goto(url)
   const file = await page.screenshot({ type })
@@ -20,11 +14,18 @@ async function shot(url, type){
  * @param {Request} req
  * @param {Response} res
  */
-module.exports = async(req, res) => {
-  const { type = 'png', page = 'jt.houk.space' } = req.query
-  const url = `https://${page}`
-  const file = await shot(url, type)
-  res.statusCode = 200
-  res.setHeader('Content-Type', `image/\${type}`)
-  res.end(file)
+module.exports = async (req, res, next) => {
+  try {
+    const { type = 'png' } = req.query
+    const { page = 'jt.houk.space' } = req.params
+    const uri = decodeURIComponent(page)
+    const url = uri.startsWith('http') ? uri : `https://${uri}`
+    const file = await shot(url, type)
+    res.statusCode = 200
+    res.setHeader('Content-Type', `image/\${type}`)
+    res.end(file)
+  } catch (err) {
+    err.status = 400
+    next(err)
+  }
 }

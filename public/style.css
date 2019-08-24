@@ -6,3 +6,8 @@ body {
 a {
   color: #00B7FF;
 }
+
+.shot {
+  max-height: 100%;
+  max-width: 100%;
+}
